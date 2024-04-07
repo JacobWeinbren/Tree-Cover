@@ -1,6 +1,6 @@
 # Tree Cover England
 
-This project analyzes tree cover and income deprivation data for Lower Layer Super Output Areas (LSOAs) in England.
+This project analyses tree cover and income deprivation data for Lower Layer Super Output Areas (LSOAs) in England.
 
 ## Data Sources
 
@@ -20,9 +20,13 @@ The data processing is done using Python scripts located in the `scripts` direct
 
 The following commands are used to generate vector tiles from the GeoJSON files:
 
+Splits the large buildings file
+
 ```bash
     python scripts/split.py
 ```
+
+Simplifies the large buildings files
 
 ```bash
     node --max-old-space-size=32000 /usr/local/bin/mapshaper -i output/split/part01.geojson -simplify 10% keep-shapes -o output/split/simplified_part01.geojson
@@ -33,6 +37,8 @@ The following commands are used to generate vector tiles from the GeoJSON files:
     node --max-old-space-size=32000 /usr/local/bin/mapshaper -i output/split/part06.geojson -simplify 10% keep-shapes -o output/split/simplified_part06.geojson
     node --max-old-space-size=32000 /usr/local/bin/mapshaper -i output/split/part07.geojson -simplify 10% keep-shapes -o output/split/simplified_part07.geojson
 ```
+
+Combines the large building files
 
 ```bash
     python scripts/combine.py
