@@ -1,0 +1,109 @@
+<div id="comparison-container" class="relative h-full w-full">
+	<div id="income-map" class="map"></div>
+	<div id="cover-map" class="map"></div>
+</div>
+<div id="geocoder" class="geocoder fixed top-4 left-4 z-10"></div>
+<div
+	class="sm:w-[500px] text-sm w-full flex flex-col gap-2 absolute bottom-10 rounded-md z-10 bg-white p-4 left-1/2 transform -translate-x-1/2"
+>
+	<div>
+		<p class="text-md font-semibold">Tree Cover / Income Deprivation</p>
+		<p class="mb-2">England</p>
+	</div>
+	<div>
+		<p class="font-semibold">Income Deprivation Rank</p>
+		<div id="income-gradient" class="w-full h-4 rounded"></div>
+		<div class="flex justify-between">
+			<span id="income-min"></span>
+			<span id="income-mid"></span>
+			<span id="income-max"></span>
+		</div>
+	</div>
+	<div>
+		<p class="font-semibold mt-2">Tree Cover</p>
+		<div id="cover-gradient" class="w-full h-4 rounded"></div>
+		<div class="flex justify-between">
+			<span id="cover-min"></span>
+			<span id="cover-mid"></span>
+			<span id="cover-max"></span>
+		</div>
+	</div>
+</div>
+<script>
+	import mapboxgl from "mapbox-gl";
+	import MapboxCompare from "mapbox-gl-compare";
+	import chroma from "chroma-js";
+	const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN;
+	const createMap = (container) => {
+		return new mapboxgl.Map({
+			container,
+			style: "mapbox://styles/mapbox/dark-v11?optimize=true",
+			center: [-4.2, 55.8],
+			zoom: 9,
+			accessToken: MAPBOX_TOKEN,
+		});
+	};
+	const incomeMap = createMap("income-map");
+	const coverMap = createMap("cover-map");
+	Promise.all([incomeMap.once("load"), coverMap.once("load")]).then(() => {
+		const createGradient = (domainStart, domainEnd, colors) => {
+			const scale = chroma
+				.scale(colors)
+				.mode("lch")
+				.domain([domainStart, domainEnd]);
+			const stops = scale.colors(5);
+			return stops;
+		};
+		const incomeGradient = createGradient(0, 32844, [
+			"#ca0020",
+			"#f7f7f7",
+			"#0571b0",
+		]);
+		const coverGradient = createGradient(0, 100, [
+			"#FDFFE9",
+			"#89C380",
+			"#1C482D",
+		]);
+		const addLayers = (map, variable, gradient) => {
+			map.addSource("buildings", {
+				type: "vector",
+				tiles: [
+					"https://map.jacobweinbren.workers.dev/tree-buildings/{z}/{x}/{y}.mvt",
+				],
+				minzoom: 0,
+				maxzoom: 17,
+			});
+			map.addLayer({
+				id: "buildings-layer",
+				type: "fill-extrusion",
+				source: "buildings",
+				"source-layer": "simplified_buildings",
+				paint: {
+					"fill-extrusion-color": [
+						"interpolate",
+						["linear"],
+						["get", variable],
+						...gradient.flatMap((color, i) => [i * 25, color]),
+					],
+					"fill-extrusion-height": ["get", "height"],
+					"fill-extrusion-opacity": 0.8,
+				},
+			});
+		};
+		addLayers(incomeMap, "income", incomeGradient);
+		addLayers(coverMap, "cover", coverGradient);
+		const updateLegend = (variable, gradient, min, mid, max) => {
+			document.getElementById(`${variable}-gradient`).style.background =
+				`linear-gradient(to right, ${gradient.join(", ")})`;
+			document.getElementById(`${variable}-min`).textContent =
+				`${min}${variable === "cover" ? "% (no cover)" : " (most deprived)"}`;
+			document.getElementById(`${variable}-max`).textContent =
+				`${max}${variable === "cover" ? "% (total cover)" : " (least deprived)"}`;
+		};
+		updateLegend("income", incomeGradient, 0, 16422, 32844);
+		updateLegend("cover", coverGradient, 0, 50, 100);
+		new MapboxCompare(incomeMap, coverMap, "#comparison-container", {
+			mousemove: true,
+		});
+	});
+</script>
