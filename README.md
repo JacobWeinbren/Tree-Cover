@@ -49,5 +49,5 @@ Combines the large building files
 ```
 
 ```bash
-    tippecanoe --output=output/simplified-buildings.pmtiles --generate-ids --force --no-feature-limit --no-tile-size-limit --detect-shared-borders --coalesce-fraction-as-needed --coalesce-densest-as-needed --coalesce-smallest-as-needed --coalesce --reorder --minimum-zoom=0 --maximum-zoom=15 -r1 output/simplified_buildings.geojson
+    tippecanoe --output=output/tree-buildings.pmtiles --generate-ids --force --no-feature-limit --no-tile-size-limit --detect-shared-borders --coalesce-fraction-as-needed --coalesce-densest-as-needed --coalesce-smallest-as-needed --coalesce --reorder --minimum-zoom=0 --maximum-zoom=15 -r1 output/simplified_buildings.geojson
 ```

@@ -1,4 +1,7 @@
-<div id="comparison-container" class="relative h-full w-full">
+<div
+	id="comparison-container"
+	class="absolute top-0 bottom-0 left-0 right-0 w-full"
+>
 	<div id="income-map" class="map"></div>
 	<div id="cover-map" class="map"></div>
 </div>
@@ -15,7 +18,6 @@
 		<div id="income-gradient" class="w-full h-4 rounded"></div>
 		<div class="flex justify-between">
 			<span id="income-min"></span>
-			<span id="income-mid"></span>
 			<span id="income-max"></span>
 		</div>
 	</div>
@@ -24,37 +26,49 @@
 		<div id="cover-gradient" class="w-full h-4 rounded"></div>
 		<div class="flex justify-between">
 			<span id="cover-min"></span>
-			<span id="cover-mid"></span>
 			<span id="cover-max"></span>
 		</div>
 	</div>
 </div>
+<style>
+	.map {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 100%;
+	}
+</style>
 <script>
 	import mapboxgl from "mapbox-gl";
 	import MapboxCompare from "mapbox-gl-compare";
 	import chroma from "chroma-js";
+
 	const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN;
+
 	const createMap = (container) => {
 		return new mapboxgl.Map({
 			container,
 			style: "mapbox://styles/mapbox/dark-v11?optimize=true",
-			center: [-4.2, 55.8],
+			center: [-0.12, 51.5],
 			zoom: 9,
+			maxZoom: 15,
 			accessToken: MAPBOX_TOKEN,
 		});
 	};
+
 	const incomeMap = createMap("income-map");
 	const coverMap = createMap("cover-map");
+
 	Promise.all([incomeMap.once("load"), coverMap.once("load")]).then(() => {
 		const createGradient = (domainStart, domainEnd, colors) => {
-			const scale = chroma
+			return chroma
 				.scale(colors)
 				.mode("lch")
-				.domain([domainStart, domainEnd]);
-			const stops = scale.colors(5);
-			return stops;
+				.domain([domainStart, domainEnd])
+				.colors(5);
 		};
-		const incomeGradient = createGradient(0, 32844, [
+
+		const incomeGradient = createGradient(1, 32844, [
 			"#ca0020",
 			"#f7f7f7",
 			"#0571b0",
@@ -64,46 +78,54 @@
 			"#89C380",
 			"#1C482D",
 		]);
-		const addLayers = (map, variable, gradient) => {
+
+		const addLayers = (map, variable, gradient, minValue, maxValue) => {
 			map.addSource("buildings", {
 				type: "vector",
 				tiles: [
-					"https://map.jacobweinbren.workers.dev/tree-buildings/{z}/{x}/{y}.mvt",
+					"https://map.jacobweinbren.workers.dev/tree-LSOA/{z}/{x}/{y}.mvt",
 				],
 				minzoom: 0,
-				maxzoom: 17,
+				maxzoom: 15,
 			});
+
+			const steps = gradient.length - 1;
+			const stepSize = (maxValue - minValue) / steps;
+
 			map.addLayer({
 				id: "buildings-layer",
 				type: "fill-extrusion",
 				source: "buildings",
-				"source-layer": "simplified_buildings",
+				"source-layer": "filtered_LSOA",
 				paint: {
 					"fill-extrusion-color": [
 						"interpolate",
 						["linear"],
 						["get", variable],
-						...gradient.flatMap((color, i) => [i * 25, color]),
+						...gradient.flatMap((color, i) => [
+							minValue + i * stepSize,
+							color,
+						]),
 					],
-					"fill-extrusion-height": ["get", "height"],
-					"fill-extrusion-opacity": 0.8,
 				},
 			});
 		};
-		addLayers(incomeMap, "income", incomeGradient);
-		addLayers(coverMap, "cover", coverGradient);
-		const updateLegend = (variable, gradient, min, mid, max) => {
+
+		addLayers(incomeMap, "income", incomeGradient, 1, 32844);
+		addLayers(coverMap, "cover", coverGradient, 0, 50);
+
+		const updateLegend = (variable, gradient, min, max) => {
 			document.getElementById(`${variable}-gradient`).style.background =
 				`linear-gradient(to right, ${gradient.join(", ")})`;
 			document.getElementById(`${variable}-min`).textContent =
 				`${min}${variable === "cover" ? "% (no cover)" : " (most deprived)"}`;
 			document.getElementById(`${variable}-max`).textContent =
-				`${max}${variable === "cover" ? "% (total cover)" : " (least deprived)"}`;
+				`${max}${variable === "cover" ? "% (high cover)" : " (least deprived)"}`;
 		};
-		updateLegend("income", incomeGradient, 0, 16422, 32844);
-		updateLegend("cover", coverGradient, 0, 50, 100);
-		new MapboxCompare(incomeMap, coverMap, "#comparison-container", {
-			mousemove: true,
-		});
+
+		updateLegend("income", incomeGradient, 1, 32844);
+		updateLegend("cover", coverGradient, 0, 25);
+
+		new MapboxCompare(incomeMap, coverMap, "#comparison-container", {});
 	});
 </script>
