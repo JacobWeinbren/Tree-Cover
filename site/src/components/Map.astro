@@ -40,6 +40,7 @@
 </style>
 <script>
 	import mapboxgl from "mapbox-gl";
+	import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 	import MapboxCompare from "mapbox-gl-compare";
 	import chroma from "chroma-js";
 
@@ -48,7 +49,7 @@
 	const createMap = (container) => {
 		return new mapboxgl.Map({
 			container,
-			style: "mapbox://styles/mapbox/dark-v11?optimize=true",
+			style: "mapbox://styles/mapbox/light-v11?optimize=true",
 			center: [-0.12, 51.5],
 			zoom: 9,
 			maxZoom: 15,
@@ -80,6 +81,10 @@
 		]);
 
 		const addLayers = (map, variable, gradient, minValue, maxValue) => {
+			const firstLabelLayerId = map
+				.getStyle()
+				.layers.find((layer) => layer.type === "symbol").id;
+
 			map.addSource("buildings", {
 				type: "vector",
 				tiles: [
@@ -92,23 +97,26 @@
 			const steps = gradient.length - 1;
 			const stepSize = (maxValue - minValue) / steps;
 
-			map.addLayer({
-				id: "buildings-layer",
-				type: "fill-extrusion",
-				source: "buildings",
-				"source-layer": "filtered_LSOA",
-				paint: {
-					"fill-extrusion-color": [
-						"interpolate",
-						["linear"],
-						["get", variable],
-						...gradient.flatMap((color, i) => [
-							minValue + i * stepSize,
-							color,
-						]),
-					],
+			map.addLayer(
+				{
+					id: "buildings-layer",
+					type: "fill-extrusion",
+					source: "buildings",
+					"source-layer": "filtered_LSOA",
+					paint: {
+						"fill-extrusion-color": [
+							"interpolate",
+							["linear"],
+							["get", variable],
+							...gradient.flatMap((color, i) => [
+								minValue + i * stepSize,
+								color,
+							]),
+						],
+					},
 				},
-			});
+				firstLabelLayerId
+			);
 		};
 
 		addLayers(incomeMap, "income", incomeGradient, 1, 32844);
@@ -125,6 +133,18 @@
 
 		updateLegend("income", incomeGradient, 1, 32844);
 		updateLegend("cover", coverGradient, 0, 25);
+
+		const geocoder = new MapboxGeocoder({
+			accessToken: MAPBOX_TOKEN,
+			mapboxgl: mapboxgl,
+			position: "top-left",
+		});
+
+		document
+			.getElementById("geocoder")
+			.appendChild(geocoder.onAdd(incomeMap));
+
+		incomeMap.addControl(new mapboxgl.NavigationControl());
 
 		new MapboxCompare(incomeMap, coverMap, "#comparison-container", {});
 	});
