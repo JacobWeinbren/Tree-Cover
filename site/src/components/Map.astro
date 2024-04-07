@@ -100,18 +100,23 @@
 			map.addLayer(
 				{
 					id: "buildings-layer",
-					type: "fill-extrusion",
+					type: "fill",
 					source: "buildings",
 					"source-layer": "filtered_LSOA",
 					paint: {
-						"fill-extrusion-color": [
-							"interpolate",
-							["linear"],
-							["get", variable],
-							...gradient.flatMap((color, i) => [
-								minValue + i * stepSize,
-								color,
-							]),
+						"fill-color": [
+							"case",
+							["!=", ["get", variable], null],
+							[
+								"interpolate",
+								["linear"],
+								["get", variable],
+								...gradient.flatMap((color, i) => [
+									minValue + i * stepSize,
+									color,
+								]),
+							],
+							"rgba(0, 0, 0, 0)",
 						],
 					},
 				},
