@@ -45,9 +45,39 @@ Combines the large building files
 ```
 
 ```bash
-    tippecanoe --output=output/filtered-LSOA.pmtiles --generate-ids --force --no-feature-limit --no-tile-size-limit --detect-shared-borders --coalesce-fraction-as-needed --coalesce-densest-as-needed --coalesce-smallest-as-needed --coalesce --reorder --minimum-zoom=0 --maximum-zoom=15 -r1 output/filtered_LSOA.geojson
+    tippecanoe --output=output/filtered-LSOA.pmtiles \
+           --layer="filteredLSOA" \
+           --no-feature-limit \
+           --no-tile-size-limit \
+           --detect-shared-borders \
+           --coalesce-fraction-as-needed \
+           --coalesce-densest-as-needed \
+           --coalesce-smallest-as-needed \
+           --increase-gamma-as-needed \
+           --coalesce \
+           --reorder \
+           --minimum-zoom=0 \
+           --maximum-zoom=17 \
+           --force \
+           --simplification=20 \
+           output/filtered_LSOA.geojson
 ```
 
 ```bash
-    tippecanoe --output=output/tree-buildings.pmtiles --generate-ids --force --no-feature-limit --no-tile-size-limit --detect-shared-borders --coalesce-fraction-as-needed --coalesce-densest-as-needed --coalesce-smallest-as-needed --coalesce --reorder --minimum-zoom=0 --maximum-zoom=15 -r1 output/simplified_buildings.geojson
+    tippecanoe --output=output/tree-buildings.pmtiles \
+           --layer="treeBuildings" \
+           --no-feature-limit \
+           --no-tile-size-limit \
+           --detect-shared-borders \
+           --coalesce-fraction-as-needed \
+           --coalesce-densest-as-needed \
+           --coalesce-smallest-as-needed \
+           --increase-gamma-as-needed \
+           --coalesce \
+           --reorder \
+           --minimum-zoom=0 \
+           --maximum-zoom=17 \
+           --force \
+           --simplification=20 \
+           output/simplified_buildings.geojson
 ```

@@ -85,7 +85,7 @@
 				.getStyle()
 				.layers.find((layer) => layer.type === "symbol").id;
 
-			map.addSource("buildings", {
+			map.addSource("lsoa", {
 				type: "vector",
 				tiles: [
 					"https://map.jacobweinbren.workers.dev/tree-LSOA/{z}/{x}/{y}.mvt",
@@ -99,10 +99,10 @@
 
 			map.addLayer(
 				{
-					id: "buildings-layer",
+					id: "lsoa-layer",
 					type: "fill",
-					source: "buildings",
-					"source-layer": "filtered_LSOA",
+					source: "lsoa",
+					"source-layer": "filteredLSOA",
 					paint: {
 						"fill-color": [
 							"case",
